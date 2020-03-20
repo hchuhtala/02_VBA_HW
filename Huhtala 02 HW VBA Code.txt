@@ -1,0 +1,159 @@
+Sub Huhtala_HW_02_Calculations()
+
+'I deleted PLNT data that was all 0 from 2015 and 2014 _
+    becasue it resulted in a divide by 0 error for the _
+    percent difference calculations
+    
+Dim i As Double
+Dim RowCount As Double
+
+Dim j As Double
+Dim Summary_Table_Row As Double
+
+Dim sheet As Worksheet
+
+Dim Ticker As String
+Dim Total_V As Double
+
+Dim EndPrice As Double
+Dim StartPrice As Double
+Dim PriceChange As Double
+Dim PercentChange As Double
+
+Dim MaxIncrease As Double
+Dim MaxDecrease As Double
+Dim MaxVolume As Double
+Dim MaxInTicker As String
+Dim MaxDeTicker As String
+Dim MaxVTicker As String
+
+Application.ScreenUpdating = False
+         
+         
+ 'Loop through worksheets
+For Each sheet In Worksheets
+ 
+   With sheet
+    'With ActiveSheet
+ 
+            Total_V = 0
+            Summary_Table_Row = 2
+            StartPrice = .Cells(2, 3).Value
+            RowCount = .range("A" & Rows.Count).End(xlUp).Row
+            SummaryRowCount = .range("I" & Rows.Count).End(xlUp).Row
+
+           ' Create the Summary Table Headers
+            .range("I1").Value = "Ticker"
+            .range("J1").Value = "Yearly Change"
+            .range("K1").Value = "Percent Change (%)"
+            .range("L1").Value = "Total Volume"
+            
+            .range("N1").Value = "Ticker"
+            .range("O1").Value = "Value"
+            
+            .range("M2").Value = "Greatest % Increase"
+            .range("M3").Value = "Greatest % Decrease"
+            .range("M4").Value = "Greatest Total Volume"
+            
+            
+             ' Loop through all rows
+          For i = 2 To RowCount
+          
+            ' Check if we are still within the same ticker, if it is not...
+            If .Cells(i + 1, 1).Value <> .Cells(i, 1).Value Then
+        
+              ' Set the ticker name
+              Ticker = .Cells(i, 1).Value
+        
+              ' Add to the Total Volume
+              Total_V = Total_V + .Cells(i, 7).Value
+        
+              ' Add to the Summary Table
+              .range("I" & Summary_Table_Row).Value = Ticker
+
+              .range("L" & Summary_Table_Row).Value = Total_V
+        
+              ' Add one to the summary table row
+              Summary_Table_Row = Summary_Table_Row + 1
+              
+              ' Reset the Total
+              Total_V = 0
+              
+               'ASSUMES LIST IS IN ORDER FROM START OF YEAR TO END
+                'Remember End Price
+                EndPrice = .Cells(i, 6).Value
+                
+                'Calculate
+                PriceChange = EndPrice - StartPrice
+                PercentChange = PriceChange / StartPrice
+            
+                'Write to table
+                .range("J" & Summary_Table_Row - 1).Value = PriceChange
+                .range("K" & Summary_Table_Row - 1).Value = Round(PercentChange * 100, 2)
+            
+                'Remember start price for next ticker
+                StartPrice = .Cells(i + 1, 3).Value
+                
+            ' If the cell immediately following a row is the same ticker...
+            Else
+        
+              ' Add to the Total Volume
+              Total_V = Total_V + .Cells(i, 7).Value
+              
+            End If
+
+          Next i
+                  MaxIncrease = .Cells(2, 11).Value
+                  MaxDecrease = .Cells(2, 11).Value
+                  MaxVolume = .Cells(2, 12).Value
+        
+          ' Loop through summary table
+          For j = 2 To Summary_Table_Row
+        
+            ' Check if we see a larger % change
+            If .Cells(j + 1, 11).Value > MaxIncrease Then
+        
+              ' if so remember it as the max
+              MaxIncrease = .Cells(j + 1, 11).Value
+              MaxInTicker = .Cells(j + 1, 9).Value
+              
+            End If
+            
+            ' Check if we see a larger % change
+            If .Cells(j + 1, 11).Value < MaxDecrease Then
+        
+              ' if so remember it as the max
+              MaxDecrease = .Cells(j + 1, 11).Value
+              MaxDeTicker = .Cells(j + 1, 9).Value
+              
+            End If
+            ' Check if we see a larger volume
+            If .Cells(j + 1, 12).Value > MaxIncrease Then
+        
+              ' if so remember it as the max
+              MaxVolume = .Cells(j + 1, 12).Value
+              MaxVTicker = .Cells(j + 1, 9).Value
+              
+            End If
+        
+          Next j
+          
+        'Conditional Formatting for positive or yealry change
+         .range("J2:J" & RowCount).FormatConditions.Delete 'Clear formatting
+         .range("J2:J" & RowCount).FormatConditions.Add(xlCellValue, xlLess, 0).Interior.ColorIndex = 3 'Red
+         .range("J2:J" & RowCount).FormatConditions.Add(xlCellValue, xlGreater, 0).Interior.ColorIndex = 10 'Dark green
+         
+         'Overall Stats
+         .range("O2").Value = MaxIncrease
+         .range("O3").Value = MaxDecrease
+         .range("O4").Value = MaxVolume
+         .range("N2").Value = MaxInTicker
+         .range("N3").Value = MaxDeTicker
+         .range("N4").Value = MaxVTicker
+                
+    End With
+Next
+   
+Application.ScreenUpdating = True
+            
+End Sub
